@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Triviall: party games with a TV, phones, and secrets</title>
+<meta name="description" content="Triviall runs party games where the TV shows what is public, each phone shows what is private, and the host runs the room from a third screen.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="packages/ui-kit/ui-kit.css">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<header class="top"><a class="brand" href="./">Triviall</a><nav><a href="lab/">Lab</a><a href="docs/">Docs</a></nav></header>
+
+<section class="hero">
+  <div>
+    <h1>One TV, everyone's phones, and a game that can keep a secret.</h1>
+    <p class="lede">Triviall runs party games where the TV shows what is public, each phone shows what is private, and the host runs the room from a third screen.</p>
+    <div class="cta"><a class="primary" href="lab/">Open the lab</a><a class="secondary" href="docs/">Read the docs</a></div>
+  </div>
+  <div class="demo" aria-label="Live demo">
+    <div class="stage-wrap" id="d-display"></div>
+    <div class="row"><div id="d-phone"></div><div id="d-host"></div></div>
+    <p class="cap">Live on this page, from the same engine as the lab. Tap an answer on the phone. Three bots play the other seats.</p>
+  </div>
+</section>
+
+<section class="band">
+  <h2>What you can review today</h2>
+  <div class="cols">
+    <div><h3>Trivia</h3><p>20 questions by default, pulled once per game from the Open Trivia Database, with a bundled set if the network fails. Faster correct answers score more.</p></div>
+    <div><h3>Werewolves</h3><p>5 to 15 players with roles that scale by group size. The runtime narrates every phase. The TV never learns who the werewolves are.</p></div>
+    <div><h3>Three views</h3><p>Display, host, and player each get their own payload from the engine. The lab shows the raw JSON each role receives and flags any secret field on the display.</p></div>
+    <div><h3>Tested engine</h3><p>The game rules are pure and deterministic, so a seed replays identically. Automated tests cover scoring, role isolation, timing, and failure handling.</p></div>
+  </div>
+</section>
+
+<section class="band">
+  <h2>Not built yet</h2>
+  <ul class="todo-list">
+    <li>The realtime server and one-click Codespaces startup. Today everything runs in your browser.</li>
+    <li>Joining from real phones with a QR code and room code.</li>
+    <li>Google Cast and TV-browser display for a separate screen.</li>
+    <li>One device acting as host and player at once, across tabs.</li>
+  </ul>
+  <p>The <a href="docs/#roadmap">roadmap</a> lists the order, and the <a href="docs/#spike">verification spike</a> lists what must be tested on real hardware first.</p>
+</section>
+
+<footer>Triviall is open source under the MIT license. Trivia questions come from the <a href="https://opentdb.com">Open Trivia Database</a> and are licensed CC BY-SA 4.0.</footer>
+
+<script type="module">
+import { LocalRoom } from './packages/room/index.js';
+import { renderDisplay, renderPlayer, renderHost, tickTimers } from './packages/ui-kit/index.js';
+import * as trivia from './games/trivia/index.js';
+import { FALLBACK_QUESTIONS } from './games/trivia/fallback.js';
+
+const NAMES = ['Ada', 'Bo', 'Cy', 'Di'];
+let room, ids, dirty = true, endedAt = 0;
+function fresh() {
+  room = new LocalRoom(trivia, { config: { count: 6, timeMs: 12000, revealMs: 4000 }, seed: Math.floor(Math.random() * 1e6),
+    content: { questions: FALLBACK_QUESTIONS.slice(0, 6), source: 'fallback' } });
+  ids = NAMES.map((n) => room.join(n));
+  room.command({ type: 'start' });
+  room.subscribe(() => { dirty = true; });
+  dirty = true; endedAt = 0;
+}
+function paint() {
+  document.getElementById('d-display').innerHTML = renderDisplay(room.view('display'));
+  document.getElementById('d-phone').innerHTML = renderPlayer(room.view('player', ids[0]));
+  document.getElementById('d-host').innerHTML = renderHost(room.view('host'));
+}
+document.addEventListener('click', (e) => {
+  const b = e.target.closest('#d-phone [data-input]'); if (!b) return;
+  room.input(ids[0], JSON.parse(b.dataset.input));
+});
+setInterval(() => {
+  room.tick();
+  for (const id of ids.slice(1)) {
+    const p = room.view('player', id).prompt;
+    if (p && !p.submitted && Math.random() < 0.3) room.input(id, { type: p.kind, choice: p.options[Math.floor(Math.random() * p.options.length)].id });
+  }
+  if (room.state.phase === 'final') { endedAt ||= Date.now(); if (Date.now() - endedAt > 7000) fresh(); }
+}, 400);
+fresh();
+(function frame() {
+  if (dirty) { dirty = false; paint(); }
+  const now = room.now(); tickTimers(document.getElementById('d-display'), now); tickTimers(document.getElementById('d-phone'), now);
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

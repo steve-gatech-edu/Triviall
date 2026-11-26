@@ -1,0 +1,10 @@
+{
+  "name": "triviall",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Triviall: a party-game platform. Trivia and Werewolves, with separate host, display, and player views.",
+  "scripts": { "test": "make test", "check": "make check", "serve": "make serve" },
+  "engines": { "node": ">=20" },
+  "license": "MIT"
+}
