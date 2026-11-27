@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Triviall docs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../packages/ui-kit/ui-kit.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<header class="top"><a class="brand" href="../">Triviall</a><nav><a href="../lab/">Lab</a><a href="./">Docs</a></nav></header>
+<div class="docs">
+<aside aria-label="Sections">
+  <a href="#quickstart">Quickstart</a><a href="#codespace">Open in a Codespace</a><a href="#pages">Publish on GitHub Pages</a><a href="#structure">Repository layout</a><a href="#views">Three views</a>
+  <a href="#contract">Game contract</a><a href="#add-game">Add a game</a><a href="#trivia">Trivia</a><a href="#werewolves">Werewolves</a>
+  <a href="#status">What is real today</a><a href="#roadmap">Roadmap</a><a href="#spike">Verification spike</a>
+</aside>
+<article>
+<h1>Triviall docs</h1>
+<p>Triviall is a platform for party games. A game provides rules and three views of its state. The platform provides everything around it. This repository is the first slice: the game engine, two games, a shared UI kit, and a lab for reviewing them.</p>
+
+<h2 id="quickstart">Quickstart</h2>
+<p>You need Node 20 or newer, Python 3, and <code>make</code>. There are no packages to install.</p>
+<pre><code>make test     # run the engine and game tests
+make check    # tests plus a link and import check for the site
+make serve    # serve the site at http://localhost:8080</code></pre>
+<p>Open <code>http://localhost:8080/lab/</code> to review the games. Pages must be served over HTTP because the site uses ES modules.</p>
+
+<h2 id="codespace">Open in a Codespace</h2>
+<p>The <code>.devcontainer/</code> folder runs <code>scripts/bootstrap.sh</code> after creation and <code>scripts/start.sh</code> on every start, serving the site on port 8080. This is the static site only. Open the forwarded port, then go to <code>/lab/</code>. The start script tries to make the port public with the <code>gh</code> CLI, which is spike check A1 and unverified. If it fails, set the port's visibility to Public in the Ports tab.</p>
+
+<h2 id="pages">Publish on GitHub Pages</h2>
+<p>The site is plain static files at the repository root, so there is no build step.</p>
+<ol>
+<li>Push the repository to GitHub.</li>
+<li>Open Settings, then Pages. Under Build and deployment choose Deploy from a branch.</li>
+<li>Pick your default branch and the <code>/ (root)</code> folder, then save.</li>
+</ol>
+<p>The landing page is <code>index.html</code>, the lab is <code>lab/</code>, and these docs are <code>docs/</code>. The empty <code>.nojekyll</code> file keeps GitHub from processing the files. All links are relative, so the site works under a project path such as <code>/triviall/</code>.</p>
+
+<h2 id="structure">Repository layout</h2>
+<pre><code>Makefile              test, check, serve
+index.html            landing page with a live demo
+lab/                  review lab: three views plus a payload inspector
+docs/                 this site, and the spike results template
+assets/               site styles
+packages/protocol     versions, input validation, message envelope
+packages/game-sdk     seeded RNG, manifest check, leak detector
+packages/room         LocalRoom: authority and per-role projection
+packages/ui-kit       display, phone, and host renderers plus CSS
+games/trivia          rules, Open Trivia Database client, fallback set
+games/werewolves      rules and roles
+tests/                node:test suites
+scripts/              site link checker</code></pre>
+
+<h2 id="views">Three views</h2>
+<p>The room is the only holder of full game state. It asks the game for a separate view per client role, so a secret never reaches a client that should not have it.</p>
+<table>
+<tr><th>Role</th><th>Receives</th><th>Can do</th></tr>
+<tr><td>Display</td><td>Public presentation only</td><td>Nothing. It is read-only.</td></tr>
+<tr><td>Host</td><td>Room status and controls</td><td>Start and skip. It sees no hidden roles.</td></tr>
+<tr><td>Player</td><td>Own private view</td><td>Submit inputs allowed for the current phase.</td></tr>
+</table>
+<p>A device is not an identity. The room keys everything by player id, so one phone can later be a player and a display sender at once. The lab does not demonstrate that yet.</p>
+
+<h2 id="contract">Game contract</h2>
+<p>A game is a plain ES module. It must be pure: no clocks, sockets, or storage. Time arrives as <code>now</code>, and randomness comes from a seeded generator stored in the state, so the same seed and inputs always give the same game.</p>
+<pre><code>export const manifest = { id, name, version, sdk: 1, minPlayers, maxPlayers, ... };
+export const secretKeys = ['role', ...];          // must never appear in a display payload
+export function create(config, { seed, content }) // returns state
+export function join(state, { id, name })         // returns { state } or { error }
+export function handleInput(state, playerId, input, now)
+export function handleHostCommand(state, cmd, now)
+export function handleTimer(state, now)           // returns { state } or null
+export function getDisplayView(state)             // public only
+export function getHostView(state)
+export function getPlayerView(state, playerId)
+export function debug(state)                      // lab reviewer view only</code></pre>
+<p>Views use shared shapes so the UI kit can draw them. A player view has <code>headline</code>, <code>lines</code>, an optional <code>prompt</code> with options, and an optional <code>timer</code>. A prompt option is sent back as <code>{ type: prompt.kind, choice: option.id }</code>. Timers are absolute deadlines, so a reconnecting client never resets a countdown.</p>
+<p class="callout">This slice uses one deadline per phase. The full spec also describes scheduled effects and an async prepare step. Those arrive with the server.</p>
+
+<h2 id="add-game">Add a game</h2>
+<ol>
+<li>Create <code>games/your-game/index.js</code> exporting the contract above.</li>
+<li>Add it to <code>GAMES</code> in <code>lab/lab.js</code> and to the picker in <code>lab/index.html</code>.</li>
+<li>Write tests. Reuse <code>tests/helpers.js</code> for a fake clock, and check <code>findLeaks</code> against the display view for every phase.</li>
+<li>Run <code>make check</code>. A game needs no casting, room, or networking code.</li>
+</ol>
+
+<h2 id="trivia">Trivia</h2>
+<ul>
+<li>20 questions by default, adjustable from 1 to 50. The default game makes one request to the Open Trivia Database when the room is created.</li>
+<li>Questions use URL encoding and are decoded on load. If the API is unreachable, rate limited (one request per IP every 5 seconds), or returns too few questions, the game uses the bundled set and says so in the host panel.</li>
+<li>Scoring: a correct answer earns 1000 points, scaled down to 500 as time runs out. The first answer locks.</li>
+<li>The correct answer is not in any payload until the reveal.</li>
+<li>Questions are licensed CC BY-SA 4.0. The final screen shows the attribution. Check the ShareAlike terms before republishing question sets.</li>
+</ul>
+<p>The bundled set has 20 questions. The spec asks for at least 50.</p>
+
+<h2 id="werewolves">Werewolves</h2>
+<table>
+<tr><th>Players</th><th>Werewolves</th><th>Seer</th><th>Doctor</th><th>Villagers</th></tr>
+<tr><td>5 to 6</td><td>1</td><td>1</td><td>0</td><td>3 to 4</td></tr>
+<tr><td>7 to 9</td><td>2</td><td>1</td><td>1</td><td>3 to 5</td></tr>
+<tr><td>10 to 12</td><td>3</td><td>1</td><td>1</td><td>5 to 7</td></tr>
+<tr><td>13 to 15</td><td>4</td><td>1</td><td>1</td><td>7 to 9</td></tr>
+</table>
+<p>Phases run reveal, night, dawn, day, vote, verdict, and repeat until a side wins. Werewolves win when they equal the rest of the village, and villagers win when none remain.</p>
+<ul>
+<li>The display shows only public facts. Living players never carry a role tag, and night text is the same every night.</li>
+<li>Every player gets a night prompt of the same shape. Villagers get a decoy prompt, and the night always ends at its deadline, so speed reveals nothing.</li>
+<li>The host sees no roles, so the host can also play. Use the lab's reviewer view to see hidden state.</li>
+<li>Dead players see public information only.</li>
+</ul>
+
+<h2 id="status">What is real today</h2>
+<table>
+<tr><th>Area</th><th>Status</th></tr>
+<tr><td>Game rules, scoring, roles, timers</td><td>Real and tested</td></tr>
+<tr><td>Per-role views and leak checks</td><td>Real and tested</td></tr>
+<tr><td>Open Trivia Database client</td><td>Real, tested with stubbed responses. Verify against the live service from a Codespace.</td></tr>
+<tr><td>Room transport</td><td>Simulated in the browser. There is no network protocol yet.</td></tr>
+<tr><td>Lab and landing page</td><td>Not covered by automated browser tests. Review them by hand.</td></tr>
+<tr><td>Codespace config for the static site</td><td>Written, untested in a real Codespace. Public port is unverified.</td></tr>
+<tr><td>Server startup, QR join, Cast</td><td>Not built</td></tr>
+</table>
+
+<h2 id="roadmap">Roadmap</h2>
+<ol>
+<li>Run the verification spike below and record results.</li>
+<li>Single-origin server: HTTP, WebSocket, health endpoints, <code>0.0.0.0</code> binding, Dev Container.</li>
+<li>Room and identity: PIN, QR join, host credential, reconnection, rate limits.</li>
+<li>Real display, host, and player routes backed by the server, with multi-context browser tests.</li>
+<li>Presentation adapters: TV browser URL first, then Google Cast for supported senders.</li>
+<li>Hardening and a third game.</li>
+</ol>
+
+<h2 id="spike">Verification spike</h2>
+<p>These assumptions came from memory and need a real test before the server is designed around them. In a Codespace, <code>scripts/spike.mjs</code> runs on every start and records the automated checks (A1, A2, A5, A6b) in <code>docs/spike-results.md</code> and <code>docs/spike-results.json</code>. It cannot send them anywhere: commit and push the two files, or share them, to pass results back. Device checks go in the manual table in that file. Run <code>make spike</code> to refresh by hand.</p>
+<ul>
+<li>Codespaces can make the app port public without a manual step, and an anonymous phone can load it.</li>
+<li>The QR origin built from Codespaces environment variables is reachable from outside.</li>
+<li>WebSockets survive idle periods and reconnect quickly through port forwarding.</li>
+<li>A private admin port can bootstrap the first host credential.</li>
+<li>The web Cast sender works on desktop and Android Chrome but not on iOS. A receiver needs a registered app and a stable HTTPS URL.</li>
+<li>The Open Trivia Database is reachable from a Codespace despite its per-IP rate limit.</li>
+</ul>
+</article>
+</div>
+</body>
+</html>
