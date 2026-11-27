@@ -2,7 +2,7 @@
 PORT ?= 8080
 
 .DEFAULT_GOAL := help
-.PHONY: help test check serve clean
+.PHONY: help test check serve spike clean
 
 help: ## List the available commands
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  make %-8s %s\n", $$1, $$2}'
@@ -18,6 +18,9 @@ serve: ## Serve the site locally (PORT=8080)
 	@echo "Lab      http://localhost:$(PORT)/lab/"
 	@echo "Docs     http://localhost:$(PORT)/docs/"
 	python3 -m http.server $(PORT)
+
+spike: ## Run automated spike checks and write docs/spike-results.md
+	node scripts/spike.mjs
 
 clean: ## Remove local junk
 	rm -rf node_modules *.log

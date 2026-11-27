@@ -17,6 +17,10 @@ Needs Node 20+, Python 3, and make. Nothing to install.
 - `lab/` shows the display, host, and phone views side by side, with the raw payload each role receives and a check that flags any secret field on the display.
 - `docs/` is the docs site: quickstart, game contract, how to add a game, roadmap, and the verification spike.
 
+## Open in a Codespace
+
+The `.devcontainer/` config installs nothing heavy, runs `scripts/bootstrap.sh` once (tests and site check), and runs `scripts/start.sh` on every start. That serves the site on port 8080 and opens it in the preview. This serves the static site only. The realtime server is not built yet. Making the port public so phones can load it is unverified, so the script tries and tells you to use the Ports tab if it cannot. Each start also runs `scripts/spike.mjs` in the background, which records the automated verification checks in `docs/spike-results.md`. Commit and push that file (and `docs/spike-results.json`) to share the results.
+
 ## Publish on GitHub Pages
 
 Settings, Pages, Deploy from a branch, your default branch, `/ (root)`. There is no build step. Links are relative, so a project path like `/triviall/` works.
@@ -25,7 +29,7 @@ Settings, Pages, Deploy from a branch, your default branch, `/ (root)`. There is
 
 Real and tested: game rules, scoring, role assignment, timers, per-role views, leak checks, and the Open Trivia Database client (against stubbed responses).
 
-Not built yet: the realtime server, Codespaces startup, QR joining from real phones, Google Cast, and one device acting as host and player at once. The room is simulated in the browser. The lab and landing page have no automated browser tests, so review them by hand. See the roadmap and verification spike in `docs/`.
+Not built yet: the realtime server, QR joining from real phones, Google Cast, and one device acting as host and player at once. The room is simulated in the browser. The lab and landing page have no automated browser tests, so review them by hand. See the roadmap and verification spike in `docs/`.
 
 ## Layout
 
