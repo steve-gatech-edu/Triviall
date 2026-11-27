@@ -1,0 +1,30 @@
+body { margin: 0; background: var(--paper); color: var(--ink); font: 400 1rem/1.5 var(--body); }
+.bar { display: flex; align-items: center; gap: .8rem; padding: .7rem 1.2rem; background: var(--ink); color: #fff; }
+.bar a { color: #fff; text-decoration: none; }
+.brand { font: 800 1.3rem var(--display); letter-spacing: -.02em; }
+.tag { background: var(--gold); color: var(--ink); font-weight: 700; padding: 0 .55rem; border-radius: 99px; font-size: .85rem; }
+.bar nav { margin-left: auto; }
+.banner { margin: 0; padding: .6rem 1.2rem; background: #fff3d6; color: #5a4300; font-size: .92rem; }
+.controls { display: flex; flex-wrap: wrap; gap: .8rem 1.2rem; align-items: end; padding: 1rem 1.2rem; border-bottom: 1px solid var(--line); }
+.controls label { display: grid; gap: .2rem; font-size: .85rem; color: var(--muted); }
+.controls .check { display: flex; gap: .4rem; align-items: center; color: var(--ink); font-size: .95rem; }
+.controls input[type=text], .controls input[type=number], .controls select, .inspect-head select { font: 600 1rem var(--body); padding: .4rem .5rem; border: 1px solid var(--line); border-radius: .5rem; background: #fff; }
+.controls input[type=number] { width: 5rem; }
+#status { color: var(--muted); font-size: .9rem; }
+.grid { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 1.4rem; padding: 1.2rem; align-items: start; }
+.cap { font: 700 1.05rem var(--display); margin: 1.2rem 0 .5rem; } .cap:first-child { margin-top: 0; }
+.cap small { font: 400 .85rem var(--body); color: var(--muted); margin-left: .4rem; }
+.seats { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: .8rem; }
+.seat { font: 600 .9rem var(--body); border: 2px solid var(--line); background: #fff; border-radius: 99px; padding: .2rem .8rem; cursor: pointer; }
+.seat.sel { border-color: var(--violet); background: #eeecff; }
+.seat.todo::after { content: ' \2022'; color: var(--coral); }
+.inspect-head { display: flex; gap: .8rem; align-items: center; margin-bottom: .5rem; }
+.leak { font-weight: 700; font-size: .9rem; } .leak.ok { color: var(--mint); } .leak.bad { color: var(--coral); }
+pre { background: var(--ink); color: #d9d7ff; border-radius: .7rem; padding: .8rem; font-size: .78rem; max-height: 22rem; overflow: auto; margin: 0 0 .8rem; }
+#godout { background: #3a1c2a; }
+#toast { position: fixed; left: 50%; bottom: 1rem; transform: translateX(-50%); background: var(--ink); color: #fff; padding: .4rem .9rem; border-radius: 99px; margin: 0; opacity: 0; transition: opacity .2s; pointer-events: none; }
+#toast.show { opacity: 1; }
+@media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: reduce) { #toast { transition: none; } }
+
+.empty { color: var(--muted); }

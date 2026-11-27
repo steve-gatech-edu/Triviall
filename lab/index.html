@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Triviall Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../packages/ui-kit/ui-kit.css">
+<link rel="stylesheet" href="lab.css">
+</head>
+<body>
+<header class="bar">
+  <a class="brand" href="../">Triviall</a>
+  <span class="tag">Lab</span>
+  <nav><a href="../docs/">Docs</a></nav>
+</header>
+
+<p class="banner">This lab runs the real game engine inside your browser and shows the three views side by side. There is no server yet, so nothing leaves this page except an optional question fetch from the Open Trivia Database.</p>
+
+<section class="controls" aria-label="Lab controls">
+  <label>Game
+    <select id="game"><option value="trivia">Trivia</option><option value="werewolves">Werewolves</option></select>
+  </label>
+  <label>Players <input id="count" type="number" min="1" max="15" value="4"></label>
+  <label>Seed <input id="seed" type="text" value="lab-1"></label>
+  <label>Bots
+    <select id="bots"><option value="others">Play the other seats</option><option value="all">Play every seat</option><option value="off">Off</option></select>
+  </label>
+  <label class="check"><input id="fast" type="checkbox" checked> Short timers</label>
+  <label class="check" id="liveRow"><input id="live" type="checkbox"> Fetch live questions (needs network)</label>
+  <button id="start" class="btn">New room</button>
+  <span id="status" role="status"></span>
+</section>
+
+<main class="grid">
+  <section class="col-main">
+    <h2 class="cap">Display <small>shared TV screen, public information only</small></h2>
+    <div class="stage-wrap" id="display"><p class="empty">Creating a room…</p></div>
+    <h2 class="cap">Host <small>admin view, separate from the TV</small></h2>
+    <div id="host"></div>
+  </section>
+  <aside class="col-side">
+    <h2 class="cap">Phone <small>one player's private view</small></h2>
+    <div id="seats" class="seats"></div>
+    <div id="phone"></div>
+    <h2 class="cap">Payload inspector <small>exactly what each role receives</small></h2>
+    <div class="inspect-head">
+      <select id="inspect" aria-label="Payload to inspect"><option value="display">Display</option><option value="host">Host</option><option value="player">Selected player</option></select>
+      <span id="leak" class="leak"></span>
+    </div>
+    <pre id="json"></pre>
+    <label class="check"><input id="god" type="checkbox"> Reviewer view: show hidden state (not a real client)</label>
+    <pre id="godout" hidden></pre>
+  </aside>
+</main>
+<p id="toast" role="status"></p>
+<script type="module" src="lab.js"></script>
+</body>
+</html>
