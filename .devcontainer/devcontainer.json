@@ -1,1 +1,10 @@
-
+{
+  "name": "Triviall",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:1-22-bookworm",
+  "forwardPorts": [8080],
+  "portsAttributes": {
+    "8080": { "label": "Triviall", "onAutoForward": "openPreview" }
+  },
+  "postCreateCommand": "bash scripts/bootstrap.sh",
+  "postStartCommand": "bash scripts/start.sh"
+}
